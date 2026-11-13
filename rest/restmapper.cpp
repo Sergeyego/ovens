@@ -1,0 +1,320 @@
+#include "restmapper.h"
+
+RestMapper::RestMapper(QAbstractItemView *v, QWidget *parent) :
+    QWidget(parent)
+{
+    cmdNew = new QPushButton(QString::fromUtf8("Нов."),this);
+    cmdWrite = new QPushButton(QString::fromUtf8("Запись"),this);
+    cmdEdt = new QPushButton(QString::fromUtf8("Редакт."),this);
+    cmdEsc = new QPushButton(QString::fromUtf8("Сброс"),this);
+    cmdDel = new QPushButton(QString::fromUtf8("Удал."),this);
+    cmdWrite->setEnabled(false);
+    cmdEsc->setEnabled(false);
+    cmdNew->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+    cmdEdt->setIcon(style()->standardIcon(QStyle::SP_FileDialogListView));
+    cmdWrite->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
+    cmdDel->setIcon(style()->standardIcon(QStyle::SP_DialogCancelButton));
+    cmdEsc->setIcon(style()->standardIcon(QStyle::SP_DialogResetButton));
+    mainLayout = new QHBoxLayout(this);
+    setLayout(mainLayout);
+    mainLayout->addWidget(cmdEdt);
+    mainLayout->addWidget(cmdNew);
+    mainLayout->addWidget(cmdDel);
+    mainLayout->addWidget(cmdWrite);
+    mainLayout->addWidget(cmdEsc);
+
+    viewer=v;
+    viewer->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    viewer->setSelectionMode(QAbstractItemView::SingleSelection);
+    viewer->setSelectionBehavior(QAbstractItemView::SelectRows);
+    addLock(viewer);
+    mapper = new QDataWidgetMapper(this);
+    mapper->setSubmitPolicy(QDataWidgetMapper::ManualSubmit);
+    mapper->setModel(v->model());
+    RestItemDelegate *delegate = new RestItemDelegate(this);
+    setItemDelegate(delegate);
+
+    isEdt=false;
+    defaultFocus=0;
+
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel){
+        if (!restModel->isInsertable()){
+            cmdNew->hide();
+        }
+        connect(restModel,SIGNAL(sigAboutToBeSelect()),this,SLOT(reqSelect()));
+        connect(restModel,SIGNAL(sigRefresh()),this,SLOT(restorePos()));
+        connect(restModel,SIGNAL(sigRefresh()),this,SLOT(checkEmpty()));
+    }
+
+    connect(cmdNew,SIGNAL(clicked()),this,SLOT(slotNew()));
+    connect(cmdWrite,SIGNAL(clicked()),this,SLOT(slotWrite()));
+    connect(cmdEdt,SIGNAL(clicked()),this,SIGNAL(sigEdt()));
+    connect(cmdEdt,SIGNAL(clicked()),this,SLOT(slotEdt()));
+    connect(cmdEsc,SIGNAL(clicked()),this,SLOT(slotEsc()));
+    connect(cmdDel,SIGNAL(clicked()),this,SLOT(slotDel()));
+    connect(viewer->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),mapper,SLOT(setCurrentModelIndex(QModelIndex)));
+    connect(mapper,SIGNAL(currentIndexChanged(int)),this,SIGNAL(currentIndexChanged(int)));
+
+}
+
+RestMapper::~RestMapper()
+{
+
+}
+
+void RestMapper::addLock(QWidget *widget)
+{
+    lockedWidgets.push_back(widget);
+}
+
+void RestMapper::addUnLock(QWidget *widget)
+{
+    unlockedWidgets.push_back(widget);
+}
+
+void RestMapper::addEmptyLock(QWidget *widget)
+{
+    lockedEmptyWidgets.push_back(widget);
+}
+
+void RestMapper::lock(bool val)
+{
+    isEdt=val;
+    cmdDel->setEnabled(!val);
+    cmdEdt->setEnabled(!val);
+    cmdEsc->setEnabled(val);
+    cmdNew->setEnabled(!val);
+    cmdWrite->setEnabled(val);
+    for (int i=0; i<lockedWidgets.size(); i++) lockedWidgets[i]->setEnabled(!val);
+    for (int i=0; i<unlockedWidgets.size(); i++) unlockedWidgets[i]->setEnabled(val);
+    for (int i=0; i<lockedEmptyWidgets.size(); i++) lockedEmptyWidgets[i]->setEnabled(!val);
+    emit lockChanged(val);
+}
+
+void RestMapper::checkEmpty()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel) {
+        bool val = restModel->rowCount() <= 1 && restModel->isAdd();
+        if (!isEdt) {
+            for (int i=0; i<lockedEmptyWidgets.size(); i++) {
+                lockedEmptyWidgets[i]->setEnabled(!val);
+            }
+            cmdEdt->setEnabled(!val);
+            cmdDel->setEnabled(!val);
+        }
+        emit lockChanged(val);
+    }
+}
+
+bool RestMapper::isLock()
+{
+    return (cmdWrite->isEnabled());
+}
+
+void RestMapper::addMapping(QWidget *widget, QString section)
+{
+    QPalette pal=widget->palette();
+    pal.setColor(QPalette::Disabled, QPalette::Text, pal.color(QPalette::Active,QPalette::Text));
+    pal.setColor(QPalette::Disabled, QPalette::WindowText, pal.color(QPalette::Active,QPalette::WindowText));
+    pal.setColor(QPalette::Disabled, QPalette::ButtonText, pal.color(QPalette::Active,QPalette::ButtonText));
+    widget->setEnabled(false);
+    widget->setPalette(pal);
+    addUnLock(widget);
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel) {
+        int ind=restModel->columnIndex(section);
+        if (ind>=0){
+            mapper->addMapping(widget,ind);
+        } else {
+            qDebug()<<"Not found: "+section;
+        }
+    }
+}
+
+int RestMapper::currentIndex()
+{
+    return mapper->currentIndex();
+}
+
+void RestMapper::setDefaultFocus(int n)
+{
+    defaultFocus=n;
+}
+
+void RestMapper::setItemDelegate(QAbstractItemDelegate *delegate)
+{
+    mapper->setItemDelegate(delegate);
+}
+
+QVariant RestMapper::modelData(int row, QString column)
+{
+    QVariant value;
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel) {
+        int ind=restModel->columnIndex(column);
+        if (ind>=0){
+            value=restModel->data(restModel->index(row,ind),Qt::EditRole);
+        }
+    }
+    return value;
+}
+
+void RestMapper::insertNewRow()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (!restModel) return;
+
+    // Если модель уже пуста и сама добавила строку, insertRow вернет false.
+    // В этом случае нам не нужно добавлять еще одну, мы уже в режиме добавления.
+    if (!restModel->isAdd()) {
+        if (!restModel->insertRow(restModel->rowCount())) return;
+    }
+
+    setCurrentViewRow(restModel->rowCount() - 1);
+
+    // Включаем режим редактирования (блокируем таблицу, разблокируем поля)
+    if (restModel->isAdd()) {
+        lock(true);
+    }
+
+    // Устанавливаем фокус
+    if (!defaultFocus) {
+        for (int i = 0; i < mapper->model()->columnCount(); ++i) {
+            if (mapper->mappedWidgetAt(i)) {
+                mapper->mappedWidgetAt(i)->setFocus();
+                break;
+            }
+        }
+    } else {
+        if (mapper->mappedWidgetAt(defaultFocus)){
+            mapper->mappedWidgetAt(defaultFocus)->setFocus();
+        }
+    }
+}
+
+void RestMapper::refresh()
+{
+    mapper->setCurrentIndex(mapper->currentIndex());
+}
+
+void RestMapper::setCurrentViewRow(int row)
+{
+    int n=0;
+    QTableView *table = qobject_cast<QTableView *> (viewer);
+    if (table){
+        bool hidden=table->isColumnHidden(n);
+        while (hidden && n<table->model()->columnCount()){
+            n++;
+            hidden=table->isColumnHidden(n);
+        }
+    } else {
+        QListView *listview = qobject_cast<QListView *> (viewer);
+        if (listview){
+            n=listview->modelColumn();
+        }
+    }
+    viewer->setCurrentIndex(viewer->model()->index(row,n));
+    viewer->scrollTo(viewer->currentIndex());
+}
+
+void RestMapper::reqSelect()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel) {
+        savedPk=restModel->getPrimaryKeys(mapper->currentIndex());
+    }
+}
+
+void RestMapper::restorePos()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (!restModel) return;
+
+    if (m_addPending) {
+        m_addPending = false;
+        insertNewRow();
+        return;
+    }
+
+    int row = mapper->model()->rowCount() - 1;
+    if (savedPk.size()) {
+        int found = restModel->findRowByPrimaryKeys(savedPk);
+        if (found >= 0) row = found;
+    }
+    if (row >= 0) {
+        setCurrentViewRow(row);
+    }
+}
+
+void RestMapper::slotNew()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (!restModel) return;
+
+    // Защита от двойного клика, пока идёт загрузка
+    if (m_addPending) return;
+
+    m_addPending = true;
+    savedPk.clear(); // сбрасываем старую позицию
+    restModel->select();          // асинхронно
+    // Дальше — по сигналу sigRefresh, в restorePos()
+}
+
+void RestMapper::slotEdt()
+{
+    const int row = mapper->currentIndex();
+    if (row < 0) return;
+    if (RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model())) {
+        restModel->refreshRow(row);
+    }
+    lock(true);
+}
+
+void RestMapper::slotDel()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel) {
+        restModel->removeRow(mapper->currentIndex());
+    }
+    checkEmpty();
+}
+
+void RestMapper::slotWrite()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel) {
+        if (!mapper->submit()) return;
+        if (restModel->submitRow()) {
+            this->refresh();
+            lock(false);
+            emit sigWrite();
+        }
+    }
+}
+
+void RestMapper::slotEsc()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel){
+        restModel->revert();
+        if (restModel->isAdd()) {
+            setCurrentViewRow(restModel->rowCount()-1);
+        } else {
+            refresh();
+        }
+    }
+    lock(false);
+    checkEmpty();
+}
+
+void RestMapper::first()
+{
+    setCurrentViewRow(0);
+}
+
+void RestMapper::last()
+{
+    setCurrentViewRow(mapper->model()->rowCount()-1);
+}
