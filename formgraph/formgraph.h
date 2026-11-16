@@ -42,8 +42,9 @@ private:
 
 private slots:
     void updDry();
+    void updDryFinished();
     void updGraph();
-    void setCurrentProc(int index);
+    void setCurrentProc(QModelIndex index);
     void setCurrentOven(QModelIndex index);
     void updOven();
     void printGraph();

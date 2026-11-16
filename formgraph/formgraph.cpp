@@ -25,39 +25,17 @@ FormGraph::FormGraph(QWidget *parent)
     modelDry = new RestRoTableModel(this);
 
     ui->tableViewDry->setModel(modelDry);
-    /*ui->tableViewDry->setColumnHidden(0,true);
-    ui->tableViewDry->setColumnWidth(1,80);
-    ui->tableViewDry->setColumnWidth(2,115);
-    ui->tableViewDry->setColumnWidth(3,50);
-    ui->tableViewDry->setColumnWidth(4,150);
-    for (int i=5; i<ui->tableViewDry->model()->columnCount(); i++){
-        ui->tableViewDry->setColumnHidden(i,true);
-    }
 
-    mapper = new DbMapper(ui->tableViewDry,this);
-    mapper->addMapping(ui->lineEditT,5);
-    mapper->addMapping(ui->lineEditW,6);
-    mapper->addMapping(ui->lineEditZms,7);
-    mapper->addMapping(ui->lineEditKvo,8);
-    mapper->addMapping(ui->lineEditRab,9);
-    mapper->addMapping(ui->lineEditEnerg,10);
-    mapper->addMapping(ui->dateTimeEditProcBeg,2);
-    mapper->addMapping(ui->dateTimeEditProcEnd,11);
-    mapper->addMapping(ui->lineEditProg,13);
-
-    mapper->addLock(ui->pushButtonUpdDry);
-    mapper->addLock(ui->checkBoxMonly);
-    mapper->addLock(ui->checkBoxOst);
-
-    ui->horizontalLayoutMap->insertWidget(0,mapper);
-
-    modelOven = new ModelRo(this);
+    modelOven = new RestRoTableModel(this);
     ui->tableViewOven->setModel(modelOven);
-    updOven();*/
+    updOven();
 
-    //connect(mapper,SIGNAL(currentIndexChanged(int)),this,SLOT(setCurrentProc(int)));
+    connect(modelDry,SIGNAL(sigRefresh()),this,SLOT(updDryFinished()));
+    connect(ui->tableViewDry->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),this,SLOT(setCurrentProc(QModelIndex)));
     connect(ui->pushButtonUpdDry,SIGNAL(clicked(bool)),this,SLOT(updDry()));
     connect(ui->checkBoxMonly,SIGNAL(clicked(bool)),this,SLOT(updDry()));
+    connect(ui->radioButtonEl,SIGNAL(clicked(bool)),this,SLOT(updDry()));
+    connect(ui->radioButtonWire,SIGNAL(clicked(bool)),this,SLOT(updDry()));
     //connect(ui->tableViewDry->horizontalHeader(),SIGNAL(sectionClicked(int)),modelDry,SLOT(srt(int)));
     connect(ui->checkBoxOst,SIGNAL(clicked(bool)),this,SLOT(updGraph()));
     connect(ui->tableViewOven->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),this,SLOT(setCurrentOven(QModelIndex)));
@@ -145,23 +123,60 @@ void FormGraph::updDry()
     bool b=ui->checkBoxMonly->isChecked();
     ui->dateEditBeg->setEnabled(!b);
     ui->dateEditEnd->setEnabled(!b);
-    /*if (!modelDry->isEmpty()){
-        Rels::instance()->refresh();
+    QDate beg = b? QDate::currentDate().addDays(-30) : ui->dateEditBeg->date();
+    QDate end = b? QDate::currentDate().addYears(100) : ui->dateEditEnd->date();
+    QString mode = ui->radioButtonEl->isChecked()? "e" : "w";
+    QUrlQuery query;
+    query.addQueryItem("mode",mode);
+    modelDry->setPath("api/proc/ovens/rab/"+beg.toString("yyyy-MM-dd")+"/"+end.toString("yyyy-MM-dd")+"?"+query.toString());
+    modelDry->select();
+}
+
+void FormGraph::updDryFinished()
+{
+    if (ui->tableViewDry->model()->rowCount()){
+        ui->tableViewDry->selectRow(ui->tableViewDry->model()->rowCount()-1);
+        ui->tableViewDry->scrollToBottom();
     }
-    modelDry->refresh(ui->dateEditBeg->date(),ui->dateEditEnd->date(),b);*/
+    double tmax = ui->radioButtonEl->isChecked()? 450 : 900;
+    cfgPlot->setYmax(tmax);
 }
 
 void FormGraph::updGraph()
 {
-    setCurrentProc(ui->tableViewDry->currentIndex().row());
+    setCurrentProc(ui->tableViewDry->currentIndex());
 }
 
-void FormGraph::setCurrentProc(int index)
+void FormGraph::setCurrentProc(QModelIndex index)
 {
-    /*int id_owrab=ui->tableViewDry->model()->data(ui->tableViewDry->model()->index(index,0),Qt::EditRole).toInt();
-    int id_own=ui->tableViewDry->model()->data(ui->tableViewDry->model()->index(index,1),Qt::EditRole).toInt();
+    int id_owrab=modelDry->getModelData(index.row(),"id").toInt();
+    int id_own=modelDry->getModelData(index.row(),"id_o").toInt();
+    QDateTime dt_beg = modelDry->getModelData(index.row(),"dt_beg").toDateTime();
+    QVariant dt_end = modelDry->getModelData(index.row(),"dt_end");
+    QString strEnd;
+    if (!dt_end.isNull()){
+        strEnd=dt_end.toDateTime().toString("dd.MM.yyyy, HH:mm:ss");
+    }
 
-    QDateTime begTime=ui->tableViewDry->model()->data(ui->tableViewDry->model()->index(index,2),Qt::EditRole).toDateTime();
+    qint64 tpi=dt_beg.secsTo(dt_end.toDateTime());
+    QString tp=secToStr(tpi);
+
+    plot->setbaseTime(dt_beg);
+
+    ui->lineEditT->setText(modelDry->getModelData(index.row(),"t0").toString());
+    ui->lineEditW->setText(modelDry->getModelData(index.row(),"w0").toString());
+    ui->lineEditZms->setText(modelDry->getModelData(index.row(),"zms").toString());
+    ui->lineEditKvo->setText(modelDry->getModelData(index.row(),"kvo").toString());
+    ui->lineEditProcBeg->setText(dt_beg.toString("dd.MM.yyyy, HH:mm:ss"));
+    ui->lineEditProcEnd->setText(strEnd);
+    ui->lineEditS->setText(tp);
+
+
+
+
+
+
+    /*QDateTime begTime=ui->tableViewDry->model()->data(ui->tableViewDry->model()->index(index,2),Qt::EditRole).toDateTime();
     QDateTime endTime=ui->tableViewDry->model()->data(ui->tableViewDry->model()->index(index,11),Qt::EditRole).toDateTime();
     bool new_format=ui->tableViewDry->model()->data(ui->tableViewDry->model()->index(index,12),Qt::EditRole).toBool();
 
@@ -202,21 +217,8 @@ void FormGraph::setCurrentOven(QModelIndex index)
 
 void FormGraph::updOven()
 {
-    /*int saveInd=ui->tableViewOven->currentIndex().row();
-    QSqlQuery query;
-    query.prepare("select o.id, o.num, g.nam, o.pwr||'+'||o.pwr_cool||' kW' from owens as o "
-                  "inner join owens_groups as g on o.id_group=g.id "
-                  "order by o.num");
-    if (modelOven->execQuery(query)){
-        modelOven->setHeaderData(1,Qt::Horizontal,tr("Номер"));
-        modelOven->setHeaderData(2,Qt::Horizontal,tr("Группа"));
-        modelOven->setHeaderData(3,Qt::Horizontal,tr("Мощность"));
-        ui->tableViewOven->setColumnHidden(0,true);
-        ui->tableViewOven->resizeToContents();
-    }
-    if (sender()==ui->pushButtonOven && saveInd>0 && saveInd<modelOven->rowCount()){
-        ui->tableViewOven->selectRow(saveInd);
-    }*/
+    modelOven->setPath("api/proc/ovens/list");
+    modelOven->select();
 }
 
 void FormGraph::printGraph()

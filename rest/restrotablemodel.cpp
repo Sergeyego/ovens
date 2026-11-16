@@ -86,6 +86,98 @@ QVariant RestRoTableModel::headerData(int section, Qt::Orientation orientation, 
     return QAbstractTableModel::headerData(section,orientation,role);
 }
 
+bool RestRoTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (!index.isValid()) return false;
+    if (index.row() < 0 || index.row() >= modelData.size()) return false;
+    if (index.column() < 0 || index.column() >= _columns.size()) return false;
+
+    cellData &cell = modelData[index.row()][index.column()];
+    const QMetaType::Type colType = columnType(index.column());
+    const colInfo info = columnInfo(index.column());
+
+    if (role == Qt::CheckStateRole) {
+        // Только для колонок, которые реально помечены как checkable
+        if (!info.checkable) return false;
+
+        const bool checked = (value.toInt() == Qt::Checked);
+        if (colType == QMetaType::Bool) {
+            cell.edit = checked;
+        } else if (colType == QMetaType::Int) {
+            cell.edit = checked ? 1 : 0;
+        } else {
+            return false;
+        }
+        cell.display = formatVal(cell.edit, index.column());
+    } else if (role == Qt::EditRole) {
+        cell.edit = value;
+        cell.display = formatVal(value, index.column());
+    } else if (role == Qt::DisplayRole) {
+        cell.display = value.toString();
+    } else {
+        return false;
+    }
+
+    emit dataChanged(index, index);
+    return true;
+}
+
+bool RestRoTableModel::removeRow(int row, const QModelIndex &parent)
+{
+    if (row < 0 || row >= modelData.size()) {
+        return false;
+    }
+
+    beginRemoveRows(parent, row, row);
+    modelData.remove(row);
+    endRemoveRows();
+
+    return true;
+}
+
+QString RestRoTableModel::formatVal(const QVariant &val, int column) const
+{
+    if (val.isNull()) {
+        return QString();
+    }
+
+    const QMetaType::Type type = columnType(column);
+    const colInfo info = columnInfo(column);
+
+    switch (type) {
+    case QMetaType::Bool:
+        return val.toBool() ? tr("Да") : tr("Нет");
+
+    case QMetaType::Int:
+        return info.checkable
+                   ? (val.toBool() ? tr("Да") : tr("Нет"))
+                   : QLocale().toString(val.toInt());
+
+    case QMetaType::LongLong:
+        return QLocale().toString(val.toLongLong());
+
+    case QMetaType::Double:
+        return QLocale().toString(val.toDouble(), 'f', info.dec);
+
+    case QMetaType::QDate:
+        return val.toDate().toString(QStringLiteral("dd.MM.yyyy"));
+
+    case QMetaType::QTime:
+        return val.toTime().toString(QStringLiteral("HH:mm:ss"));
+
+    case QMetaType::QDateTime:
+        return val.toDateTime().toString(QStringLiteral("dd.MM.yyyy, HH:mm"));
+
+    case QMetaType::QByteArray:
+        return val.toByteArray().isEmpty()
+                   ? QString()
+                   : QStringLiteral("<%1 байт>").arg(val.toByteArray().size());
+
+    default:
+        return val.toString();
+    }
+}
+
 colInfo RestRoTableModel::columnInfo(int col) const
 {
     return (col>=0 && col<columnCount()) ? colMap.value(_columns.at(col)) : colInfo();
@@ -305,4 +397,3 @@ void RestRoTableModel::onResult()
     // Запускаем следующий запрос из очереди
     processNextRequest();
 }
-
