@@ -1,4 +1,6 @@
 #include "restrotablemodel.h"
+#include <numeric>   // std::iota
+#include <algorithm> // std::stable_sort
 
 RestRoTableModel::RestRoTableModel(QObject *parent) : QAbstractTableModel{parent}
 {
@@ -396,4 +398,92 @@ void RestRoTableModel::onResult()
 
     // Запускаем следующий запрос из очереди
     processNextRequest();
+}
+
+void RestRoTableModel::sort(int column, Qt::SortOrder order)
+{
+    if (column < 0 || column >= _columns.size() || modelData.size() < 2) {
+        return;
+    }
+
+    emit layoutAboutToBeChanged({}, QAbstractItemModel::VerticalSortHint);
+
+    const QModelIndexList oldPersistent = persistentIndexList();
+    const QMetaType::Type type = columnType(column);
+
+    QVector<int> order_idxs(modelData.size());
+    std::iota(order_idxs.begin(), order_idxs.end(), 0);
+
+    std::stable_sort(order_idxs.begin(), order_idxs.end(),
+                     [this, column, type, order](int a, int b) {
+                         const QVariant &va = modelData[a][column].edit;
+                         const QVariant &vb = modelData[b][column].edit;
+
+                         const bool aNull = !va.isValid() || va.isNull();
+                         const bool bNull = !vb.isValid() || vb.isNull();
+
+                         // NULL: в конце при asc, в начале при desc
+                         if (aNull || bNull) {
+                             if (aNull && bNull) return false;
+                             if (aNull) return order == Qt::DescendingOrder;
+                             return order == Qt::AscendingOrder;
+                         }
+
+                         int cmp = 0;
+                         switch (type) {
+                         case QMetaType::Int:
+                         case QMetaType::LongLong:
+                             cmp = va.toLongLong() < vb.toLongLong() ? -1
+                                                                     : (va.toLongLong() > vb.toLongLong() ? 1 : 0);
+                             break;
+                         case QMetaType::Double:
+                             cmp = va.toDouble() < vb.toDouble() ? -1
+                                                                 : (va.toDouble() > vb.toDouble() ? 1 : 0);
+                             break;
+                         case QMetaType::Bool:
+                             cmp = va.toBool() < vb.toBool() ? -1
+                                                             : (va.toBool() > vb.toBool() ? 1 : 0);
+                             break;
+                         case QMetaType::QDate:
+                         case QMetaType::QDateTime:
+                             cmp = va.toDateTime() < vb.toDateTime() ? -1
+                                                                     : (va.toDateTime() > vb.toDateTime() ? 1 : 0);
+                             break;
+                         case QMetaType::QTime:
+                             cmp = va.toTime() < vb.toTime() ? -1
+                                                             : (va.toTime() > vb.toTime() ? 1 : 0);
+                             break;
+                         default:
+                             cmp = QString::compare(va.toString(), vb.toString(), Qt::CaseInsensitive);
+                         }
+                         return order == Qt::AscendingOrder ? cmp < 0 : cmp > 0;
+                     });
+
+    // Если порядок не изменился — выходим без перестройки
+    bool identity = true;
+    for (int i = 0; i < order_idxs.size(); ++i) {
+        if (order_idxs[i] != i) { identity = false; break; }
+    }
+    if (identity) {
+        emit layoutChanged({}, QAbstractItemModel::VerticalSortHint);
+        return;
+    }
+
+    QVector<QVector<cellData>> newData;
+    newData.reserve(modelData.size());
+    QVector<int> oldToNew(modelData.size());
+    for (int newRow = 0; newRow < order_idxs.size(); ++newRow) {
+        oldToNew[order_idxs[newRow]] = newRow;
+        newData.push_back(modelData[order_idxs[newRow]]);
+    }
+    modelData = std::move(newData);
+
+    // Сохраняем выделение при сортировке
+    QModelIndexList newPersistent;
+    for (const QModelIndex &old : oldPersistent) {
+        newPersistent << index(oldToNew[old.row()], old.column());
+    }
+    changePersistentIndexList(oldPersistent, newPersistent);
+
+    emit layoutChanged({}, QAbstractItemModel::VerticalSortHint);
 }

@@ -4,35 +4,30 @@
 #include <QWidget>
 #include "plot/srcplot.h"
 #include <QGroupBox>
-#include <QMessageBox>
+#include <QJsonObject>
+#include <QJsonArray>
 
 class SrcChannel : public QWidget
 {
     Q_OBJECT
 public:
-    SrcChannel(Plot *p, int id_ch, int id_owr, bool o, QWidget *parent = 0);
-    SrcChannel(Plot *p, QString name, QColor cv, QColor cu, QWidget *parent = 0);
-    SrcChannel(Plot *p, int id_ch, QDateTime dBeg, QDateTime dEnd, QWidget *parent = 0);
+    SrcChannel(Plot *p, QWidget *parent = 0);
     ~SrcChannel();
+
+    // Инициализация из JSON сервера. Возвращает максимальное X для оси.
+    double initFromJson(const QJsonObject &obj);
+
     void addData(double ust, double val, double t);
-    void plotData(double xmax);
     void clear();
+
 private:
-    SrcPlot *srcUst;
-    SrcPlot *srcVal;
-    SrcPlot *srcPwr;
+    SrcPlot *srcUst = nullptr;
+    SrcPlot *srcVal = nullptr;
+    SrcPlot *srcPwr = nullptr;
     Plot *plot;
-    bool ost;
-    bool createChannel(int id_channel);
     QGroupBox *groupBoxCh;
-    void updDataPlot(int id_channel, int id_owrab);
-    void updDataPlot(int id_channel, QDateTime dBeg, QDateTime dEnd);
+
     void mkWidget(QString name, QColor cv, QColor cu);
-    
-signals:
-    
-public slots:
-    
 };
 
 #endif // SRCCHANNEL_H

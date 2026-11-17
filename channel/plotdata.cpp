@@ -8,105 +8,147 @@ PlotData::PlotData(Plot *p, QWidget *parent) :
 
 void PlotData::clearData()
 {
-    foreach (SrcChannel *s, srcData) {
+    for (SrcChannel *s : srcData) {
         s->clear();
         this->layout()->removeWidget(s);
         delete s;
     }
     srcData.clear();
+    plot->setXmax(0);
 }
 
+// ==========================================
+// Формирование запроса и постановка в очередь
+// ==========================================
 void PlotData::refresh(int id_owrab, bool new_format, bool ost)
 {
     clearData();
-    if (new_format){
-        /*QSqlQuery query;
-        query.prepare("select distinct n.id_channel as id, ch.number as num from owens_data_new as n "
-                      "inner join owens_trm_channel as ch on ch.id=n.id_channel "
-                      "where n.id_ow_rab= :id1 order by ch.number");
 
-        query.bindValue(":id1",id_owrab);
-        if (query.exec()){
-            if (query.size()){
-                while (query.next()){
-                    srcData.push_back(new SrcChannel(plot, query.value(0).toInt(),id_owrab,ost,this));
-                    this->layout()->addWidget(srcData.at(srcData.size()-1));
-                }
-            } else {
-                query.clear();
-                query.prepare("select c.id as id, c.number as num from owens_trm_channel as c "
-                              "inner join owens_rab as r on r.id_owen=c.id_owen "
-                              "where r.id = :id2 and c.is_enabled=true order by c.number");
-                query.bindValue(":id2",id_owrab);
-                if (query.exec()){
-                    while (query.next()){
-                        srcData.push_back(new SrcChannel(plot,query.value(0).toInt(),id_owrab,ost,this));
-                        this->layout()->addWidget(srcData.at(srcData.size()-1));
-                    }
-                } else {
-                    QMessageBox::critical(this,"Error",query.lastError().text(),QMessageBox::Ok);
-                }
-            }
-        } else {
-            QMessageBox::critical(this,"Error",query.lastError().text(),QMessageBox::Ok);
-        }*/
-    } else {
-        /*srcData.push_back(new SrcChannel(plot, tr("Канал 1"),Qt::black,Qt::red,this));
-        srcData.push_back(new SrcChannel(plot, tr("Канал 2"),Qt::green,Qt::blue,this));
-        foreach (SrcChannel *s, srcData) {
-           this->layout()->addWidget(s);
-        }
-        QSqlQuery query;
-        query.prepare("select data from owens_data where id_ow_rab= :id order by nom");
-        query.bindValue(":id",id_owrab);
-        if (query.exec()){
-            double x=0.0;
-            int interval=plot->getInterval();
-            QDateTime tm=plot->getBaseTime();
-            QDateTime nextTm=tm;
-            int delta;
-            while (query.next()){
-                QStringList list=query.value(0).toString().split(QRegularExpression("\\s+"));
-                //qDebug()<<list;
-                if (list.size()>=6){
-                    QStringList datelist=list.at(5).split('-');
-                    QStringList timelist=list.at(4).split(':');
-                    if (datelist.size()>=2 && timelist.size()>=2){
-                        nextTm.setDate(QDate(datelist.at(2).toInt()+2000,datelist.at(1).toInt(),datelist.at(0).toInt()));
-                        nextTm.setTime(QTime(timelist.at(0).toInt(),timelist.at(1).toInt(),timelist.at(2).toInt()));
-                    }
-                    delta=tm.secsTo(nextTm);
-                    tm=nextTm;
-                    x+= delta/interval;
-                    srcData.at(0)->addData(list.at(0).toDouble(),list.at(2).toDouble(),x);
-                    srcData.at(1)->addData(list.at(1).toDouble(),list.at(3).toDouble(),x);
-                }
-            }
-            srcData.at(0)->plotData(x);
-            srcData.at(1)->plotData(x);
-        } else {
-            QMessageBox::critical(this,"Error",query.lastError().text(),QMessageBox::Ok);
-        }*/
+    if (!new_format) {
+        // Старая логика (new_format=false) не поддерживается сервером — ничего не делаем
+        queue.clear();
+        return;
     }
+
+    QUrl url = RestConnection::instance()->buildUrl("api/proc/ovens/plotdata");
+    QUrlQuery query;
+    query.addQueryItem("id_owrab", QString::number(id_owrab));
+    if (ost) {
+        query.addQueryItem("ost", "true");
+    }
+    url.setQuery(query);
+
+    // Актуален только последний запрос
+    queue.clear();
+    queue.enqueue(url);
+
+    // Если предыдущий запрос в полёте — прерываем его, результат уже не нужен
+    if (currentReply) {
+        currentReply->disconnect();
+        currentReply->abort();
+        currentReply->deleteLater();
+        currentReply = nullptr;
+        isProcessing = false;
+    }
+
+    processNextRequest();
 }
 
 void PlotData::refresh(QDateTime dBeg, QDateTime dEnd, int id_oven)
 {
     clearData();
-    /*QSqlQuery query;
-    query.prepare("select distinct d.id_channel, c.number from owens_data_new as d "
-                  "inner join owens_trm_channel as c on c.id = d.id_channel "
-                  "where c.id_owen = :id and d.dat_time between :d1 and :d2 "
-                  "order by c.number");
-    query.bindValue(":id",id_oven);
-    query.bindValue(":d1",dBeg);
-    query.bindValue(":d2",dEnd);
-    if (query.exec()){
-        while (query.next()){
-            srcData.push_back(new SrcChannel(plot, query.value(0).toInt(),dBeg,dEnd,this));
-            this->layout()->addWidget(srcData.at(srcData.size()-1));
-        }
-    } else {
-        QMessageBox::critical(this,"Error",query.lastError().text(),QMessageBox::Ok);
-    }*/
+
+    QUrl url = RestConnection::instance()->buildUrl("api/proc/ovens/plotdata");
+    QUrlQuery query;
+    query.addQueryItem("id_oven", QString::number(id_oven));
+    query.addQueryItem("dBeg", dBeg.toString(Qt::ISODate));
+    query.addQueryItem("dEnd", dEnd.toString(Qt::ISODate));
+    url.setQuery(query);
+
+    queue.clear();
+    queue.enqueue(url);
+
+    if (currentReply) {
+        currentReply->disconnect();
+        currentReply->abort();
+        currentReply->deleteLater();
+        currentReply = nullptr;
+        isProcessing = false;
+    }
+
+    processNextRequest();
+}
+
+// ==========================================
+// Очередь запросов
+// ==========================================
+void PlotData::processNextRequest()
+{
+    if (queue.isEmpty()) {
+        isProcessing = false;
+        return;
+    }
+
+    isProcessing = true;
+    QUrl url = queue.dequeue();
+
+    currentReply = RestConnection::instance()->sendGet(url);
+    connect(currentReply, &QNetworkReply::finished, this, &PlotData::onDataReceived);
+}
+
+// ==========================================
+// Обработка ответа
+// ==========================================
+void PlotData::onDataReceived()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) return;
+
+    if (currentReply == reply) {
+        currentReply = nullptr;
+    }
+
+    const auto err = reply->error();
+    const QString errStr = reply->errorString();
+    reply->deleteLater();
+
+    // Штатная отмена — просто переходим к следующему (или завершаем)
+    if (err == QNetworkReply::OperationCanceledError) {
+        processNextRequest();
+        return;
+    }
+
+    // Пока ждали ответ — пришёл новый запрос. Текущий результат уже устарел
+    if (!queue.isEmpty()) {
+        processNextRequest();
+        return;
+    }
+
+    isProcessing = false;
+
+    if (err != QNetworkReply::NoError) {
+        QMessageBox::critical(this, tr("Ошибка"), errStr, QMessageBox::Ok);
+        return;
+    }
+
+    const QByteArray data = reply->readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+
+    if (doc.isNull() || !doc.isArray()) {
+        QMessageBox::critical(this, tr("Ошибка"), tr("Некорректный ответ сервера"), QMessageBox::Ok);
+        return;
+    }
+
+    const QJsonArray arr = doc.array();
+    double maxX = 0.0;
+
+    for (const QJsonValue &val : arr) {
+        auto *srcCh = new SrcChannel(plot, this);
+        double x = srcCh->initFromJson(val.toObject());
+        maxX = qMax(maxX, x);
+        srcData.push_back(srcCh);
+        this->layout()->addWidget(srcCh);
+    }
+
+    plot->setXmax(maxX);
 }

@@ -11,10 +11,32 @@
 #include "qwt/qwt_plot_canvas.h"
 #include "qwt/qwt_plot_textlabel.h"
 #include "qwt/qwt_text.h"
+#include "qwt/qwt_scale_engine.h"
+#include "qwt/qwt_scale_div.h"
 
 namespace Ui {
 class CfgPlot;
 }
+
+class TimeScaleEngine : public QwtLinearScaleEngine
+{
+public:
+    explicit TimeScaleEngine(int interval = 1,
+                             const QDateTime &baseTime = QDateTime::currentDateTime());
+
+    void setInterval(int sec);
+    void setBaseTime(const QDateTime &time);
+    int  interval() const;
+    QDateTime baseTime() const;
+
+    QwtScaleDiv divideScale(double x1, double x2,
+                            int maxMajorSteps, int maxMinorSteps,
+                            double stepSize = 0.0) const override;
+
+private:
+    int m_interval;
+    QDateTime m_baseTime;
+};
 
 class TimeScaleDraw: public QwtScaleDraw
 {
@@ -54,6 +76,7 @@ public:
 private:
     TimePicker *timePicker;
     TimeScaleDraw *timeScaleDraw;
+    TimeScaleEngine *timeScaleEngine;
 public slots:
     void setXmax(int value);
 };

@@ -149,7 +149,7 @@
            <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
           </property>
           <property name="sortingEnabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="verticalHeaderVisible">
            <bool>false</bool>
@@ -166,7 +166,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEditT"/>
+           <widget class="DoubleLineEdit" name="lineEditT"/>
           </item>
           <item>
            <widget class="QLabel" name="label_4">
@@ -176,7 +176,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEditW"/>
+           <widget class="DoubleLineEdit" name="lineEditW"/>
           </item>
           <item>
            <widget class="QLabel" name="label_5">
@@ -196,7 +196,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEditKvo"/>
+           <widget class="DoubleLineEdit" name="lineEditKvo"/>
           </item>
           <item>
            <widget class="QPushButton" name="pushButtonSave">
@@ -316,9 +316,6 @@
             <property name="calendarPopup">
              <bool>true</bool>
             </property>
-            <property name="timeSpec">
-             <enum>Qt::TimeSpec::UTC</enum>
-            </property>
            </widget>
           </item>
           <item>
@@ -332,9 +329,6 @@
            <widget class="QDateTimeEdit" name="dateTimeEditEnd">
             <property name="calendarPopup">
              <bool>true</bool>
-            </property>
-            <property name="timeSpec">
-             <enum>Qt::TimeSpec::UTC</enum>
             </property>
            </widget>
           </item>
@@ -480,6 +474,11 @@
    <class>RestTableView</class>
    <extends>QTableView</extends>
    <header>rest/resttableview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DoubleLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>widgets/doublelineedit.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

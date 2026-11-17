@@ -32,6 +32,7 @@ public:
     QVariant getModelData(int row, QString col) const;
     int findRowByKey(QVariant key, QString col) const;
     int columnIndex(QString nam) const;
+    void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) override;
 
 public slots:
     void select();
