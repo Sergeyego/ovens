@@ -149,6 +149,8 @@ void FormGraph::updDryFinished()
         ui->lineEditEnerg->clear();
         ui->lineEditRab->clear();
         ui->lineEditProg->clear();
+        plotData->clearData();
+        plot->setTitle("");
     }
     double tmax = ui->radioButtonEl->isChecked() ? 450 : 900;
     cfgPlot->setYmax(tmax);
@@ -243,7 +245,6 @@ void FormGraph::setCurrentProc(QModelIndex index)
                     dt_beg.toString("dd.MM.yy hh:mm:ss") + " - " + endDisplay +
                     " (" + vr + ")" + "</FONT>";
     }
-    plot->setTitle(baseTitle);
     requestSensorInfo(id_own, dt_beg.date(), baseTitle);
 }
 
@@ -264,7 +265,6 @@ void FormGraph::setCurrentOven(QModelIndex index)
                               " - " + ui->dateTimeEditEnd->dateTime().toString("dd.MM.yy hh:mm:ss") +
                               "</FONT>";
 
-    plot->setTitle(baseTitle);
     requestSensorInfo(id_oven, ui->dateTimeEditBeg->dateTime().date(), baseTitle);
 }
 
@@ -449,7 +449,6 @@ void FormGraph::deleteProc()
         "DELETE", "{}", data);
 
     if (!ok) {
-        RestError::critical(tr("Ошибка удаления"), QString::fromUtf8(data));
         return;
     }
 

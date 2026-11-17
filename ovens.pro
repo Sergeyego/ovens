@@ -10,6 +10,9 @@ SOURCES += \
     channel/plotdata.cpp \
     channel/srcchannel.cpp \
     formgraph/formgraph.cpp \
+    formoven/colordelegate.cpp \
+    formoven/formoven.cpp \
+    formprogwire/formprogwire.cpp \
     main.cpp \
     mainwindow.cpp \
     plot/cfgplot.cpp \
@@ -137,6 +140,9 @@ HEADERS += \
     channel/plotdata.h \
     channel/srcchannel.h \
     formgraph/formgraph.h \
+    formoven/colordelegate.h \
+    formoven/formoven.h \
+    formprogwire/formprogwire.h \
     mainwindow.h \
     plot/cfgplot.h \
     plot/srcplot.h \
@@ -266,6 +272,8 @@ HEADERS += \
 
 FORMS += \
     formgraph/formgraph.ui \
+    formoven/formoven.ui \
+    formprogwire/formprogwire.ui \
     mainwindow.ui \
     plot/cfgplot.ui \
     progressreportdialog/progressreportdialog.ui \

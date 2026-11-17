@@ -6,6 +6,9 @@
 #include "tabmanager.h"
 #include "rest/restconnection.h"
 #include "formgraph/formgraph.h"
+#include "formprogwire/formprogwire.h"
+#include "formoven/formoven.h"
+#include "rest_olap/cubewidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -27,9 +30,13 @@ private:
     void actAction(QAction *a, void (MainWindow::*sl)(), int lev);
     void loadSettings();
     void saveSettings();
+    void loadAnalytics();
     void clearEmptyMenus();
 
 private slots:
     void newFormGraph();
+    void newFormProgWire();
+    void newFormOven();
+    void newAnalytics();
 };
 #endif // MAINWINDOW_H

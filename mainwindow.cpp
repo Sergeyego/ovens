@@ -9,6 +9,11 @@ MainWindow::MainWindow(QWidget *parent)
     tabManager = new TabManager(ui->tabWidget,this);
 
     actAction(ui->actionGraph,&MainWindow::newFormGraph,3);
+    actAction(ui->actionProgWire,&MainWindow::newFormProgWire,3);
+
+    actAction(ui->actionOven,&MainWindow::newFormOven,3);
+
+    loadAnalytics();
 
     tabManager->loadSettings();
     loadSettings();
@@ -46,6 +51,23 @@ void MainWindow::saveSettings()
     settings.setValue("main_geometry", this->saveGeometry());
 }
 
+void MainWindow::loadAnalytics()
+{
+    QByteArray data;
+    bool ok = RestConnection::instance()->sendSyncGet("api/olap/prog/"+QApplication::applicationName(),data);
+    if (ok){
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        const QJsonArray arr=doc.array();
+        for (const QJsonValue &value : arr) {
+            int id=value.toObject().value("id").toInt();
+            QString nam=value.toObject().value("nam").toString();
+            QAction *act = ui->menu_analytics->addAction(nam);
+            act->setProperty("id_olap",id);
+            actAction(act,&MainWindow::newAnalytics,3);
+        }
+    }
+}
+
 void MainWindow::clearEmptyMenus()
 {
     QMenuBar* menuBar = this->menuBar();
@@ -65,5 +87,30 @@ void MainWindow::newFormGraph()
 {
     if (!tabManager->exist(sender())){
         tabManager->addSubWindow(new FormGraph(),sender());
+    }
+}
+
+void MainWindow::newFormProgWire()
+{
+    if (!tabManager->exist(sender())){
+        tabManager->addSubWindow(new FormProgWire(),sender());
+    }
+}
+
+void MainWindow::newFormOven()
+{
+    if (!tabManager->exist(sender())){
+        tabManager->addSubWindow(new FormOven(),sender());
+    }
+}
+
+void MainWindow::newAnalytics()
+{
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action){
+        int id = action->property("id_olap").toInt();
+        if (!tabManager->exist(sender()) && id>0){
+            tabManager->addSubWindow(new CubeWidget(id),sender());
+        }
     }
 }
