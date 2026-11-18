@@ -127,7 +127,7 @@ void PlotData::onDataReceived()
     isProcessing = false;
 
     if (err != QNetworkReply::NoError) {
-        QMessageBox::critical(this, tr("Ошибка"), errStr, QMessageBox::Ok);
+        RestError::critical(tr("Ошибка"), errStr);
         return;
     }
 
@@ -135,7 +135,7 @@ void PlotData::onDataReceived()
     QJsonDocument doc = QJsonDocument::fromJson(data);
 
     if (doc.isNull() || !doc.isArray()) {
-        QMessageBox::critical(this, tr("Ошибка"), tr("Некорректный ответ сервера"), QMessageBox::Ok);
+        RestError::critical(tr("Ошибка"), tr("Некорректный ответ сервера"));
         return;
     }
 

@@ -420,6 +420,7 @@ void FormGraph::saveProc()
     updateCell("w0",  body["w0"].toDouble());
     updateCell("zms", body["zms"].toString());
     updateCell("kvo", body["kvo"].toDouble());
+    setCurrentProc(ui->tableViewDry->currentIndex());
 }
 
 void FormGraph::deleteProc()

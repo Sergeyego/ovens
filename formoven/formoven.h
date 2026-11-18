@@ -29,6 +29,7 @@ private:
 
 private slots:
     void setCurrentOven(int index);
+    void channelUpdFinished();
     void setCurrentOvenSensor(QModelIndex index);
 
 };

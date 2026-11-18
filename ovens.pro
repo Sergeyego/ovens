@@ -12,6 +12,7 @@ SOURCES += \
     formgraph/formgraph.cpp \
     formoven/colordelegate.cpp \
     formoven/formoven.cpp \
+    formprofile/formprofile.cpp \
     formprogwire/formprogwire.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -142,6 +143,7 @@ HEADERS += \
     formgraph/formgraph.h \
     formoven/colordelegate.h \
     formoven/formoven.h \
+    formprofile/formprofile.h \
     formprogwire/formprogwire.h \
     mainwindow.h \
     plot/cfgplot.h \
@@ -273,6 +275,7 @@ HEADERS += \
 FORMS += \
     formgraph/formgraph.ui \
     formoven/formoven.ui \
+    formprofile/formprofile.ui \
     formprogwire/formprogwire.ui \
     mainwindow.ui \
     plot/cfgplot.ui \

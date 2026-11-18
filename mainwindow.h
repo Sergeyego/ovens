@@ -8,6 +8,7 @@
 #include "formgraph/formgraph.h"
 #include "formprogwire/formprogwire.h"
 #include "formoven/formoven.h"
+#include "formprofile/formprofile.h"
 #include "rest_olap/cubewidget.h"
 
 QT_BEGIN_NAMESPACE
@@ -37,6 +38,7 @@ private slots:
     void newFormGraph();
     void newFormProgWire();
     void newFormOven();
+    void newFormProfile();
     void newAnalytics();
 };
 #endif // MAINWINDOW_H
