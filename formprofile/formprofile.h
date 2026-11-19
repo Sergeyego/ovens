@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include "rest/restrotablemodel.h"
+#include "progressreportdialog/progressreportdialog.h"
 
 namespace Ui {
 class FormProfile;
@@ -19,6 +20,7 @@ public:
 private:
     Ui::FormProfile *ui;
     RestRoTableModel *modelProfile;
+    ProgressReportDialog *prd;
 
 private slots:
     void upd();

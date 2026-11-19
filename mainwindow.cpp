@@ -91,6 +91,11 @@ void MainWindow::newFormGraph()
     }
 }
 
+void MainWindow::newFormProgEl()
+{
+
+}
+
 void MainWindow::newFormProgWire()
 {
     if (!tabManager->exist(sender())){

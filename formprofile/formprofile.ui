@@ -67,7 +67,7 @@
      <item>
       <widget class="QPushButton" name="pushButtonViewXlsx">
        <property name="text">
-        <string>Показать в excel</string>
+        <string>Показать в Excel</string>
        </property>
       </widget>
      </item>
@@ -81,7 +81,11 @@
     </layout>
    </item>
    <item>
-    <widget class="RestTableView" name="tableView"/>
+    <widget class="RestTableView" name="tableView">
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+    </widget>
    </item>
   </layout>
  </widget>

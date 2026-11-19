@@ -6,6 +6,7 @@
 #include "tabmanager.h"
 #include "rest/restconnection.h"
 #include "formgraph/formgraph.h"
+#include "formprogel/formprogel.h"
 #include "formprogwire/formprogwire.h"
 #include "formoven/formoven.h"
 #include "formprofile/formprofile.h"
@@ -36,6 +37,7 @@ private:
 
 private slots:
     void newFormGraph();
+    void newFormProgEl();
     void newFormProgWire();
     void newFormOven();
     void newFormProfile();

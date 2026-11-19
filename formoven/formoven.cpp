@@ -21,6 +21,8 @@ FormOven::FormOven(QWidget *parent)
     mapper->addMapping(ui->lineEditPhead,"pwr");
     mapper->addMapping(ui->lineEditPvent,"pwr_cool");
     mapper->addMapping(ui->lineEditType,"tip");
+    mapper->addEmptyLock(ui->tableViewChannel);
+    mapper->addEmptyLock(ui->tableViewSensor);
 
     ui->horizontalLayoutMap->insertWidget(0,mapper);
 
@@ -88,7 +90,9 @@ void FormOven::channelUpdFinished()
 void FormOven::setCurrentOvenSensor(QModelIndex index)
 {
     QVariant id = modelChannel->getModelData(index.row(),"id");
-    if (id.isNull()|| index.row()<0){
+    bool ok = !(id.isNull() || index.row()<0);
+    ui->tableViewSensor->setEnabled(ok);
+    if (!ok){
         modelSensor->setDefaultValue("id_channel",-1);
         modelSensor->clear();
     } else {
