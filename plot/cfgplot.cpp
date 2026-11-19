@@ -2,8 +2,9 @@
 #include "ui_cfgplot.h"
 
 CfgPlot::CfgPlot(QwtPlot *plot, QWidget *parent) :
-    QWidget(parent), qwtPlot(plot),
-    ui(new Ui::CfgPlot)
+    QWidget(parent),
+    ui(new Ui::CfgPlot),
+    qwtPlot(plot)
 {
     ui->setupUi(this);
     qwtPlot->setAxisScale(QwtPlot::yLeft,ui->spinBox_Ymin->value(),ui->spinBox_Ymax->value());

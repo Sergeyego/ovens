@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTime>
 #include <QPen>
+#include <cmath>
 #include "qwt/qwt_plot.h"
 #include "qwt/qwt_scale_draw.h"
 #include "qwt/qwt_plot_grid.h"
