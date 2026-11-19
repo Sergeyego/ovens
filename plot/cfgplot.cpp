@@ -26,24 +26,44 @@ void CfgPlot::setNx(int value)
 {
     qwtPlot->setAxisMaxMajor(QwtPlot::xBottom,value);
     qwtPlot->replot();
+    if (sender()!=ui->spinBox_Nx){
+        ui->spinBox_Nx->blockSignals(true);
+        ui->spinBox_Nx->setValue(value);
+        ui->spinBox_Nx->blockSignals(false);
+    }
 }
 
 void CfgPlot::setNy(int value)
 {
     qwtPlot->setAxisMaxMajor(QwtPlot::yLeft,value);
     qwtPlot->replot();
+    if (sender()!=ui->spinBox_Ny){
+        ui->spinBox_Ny->blockSignals(true);
+        ui->spinBox_Ny->setValue(value);
+        ui->spinBox_Ny->blockSignals(false);
+    }
 }
 
 void CfgPlot::setYmax(int value)
 {
     qwtPlot->setAxisScale(QwtPlot::yLeft,ui->spinBox_Ymin->value(),value);
     qwtPlot->replot();
+    if (sender()!=ui->spinBox_Ymax){
+        ui->spinBox_Ymax->blockSignals(true);
+        ui->spinBox_Ymax->setValue(value);
+        ui->spinBox_Ymax->blockSignals(false);
+    }
 }
 
 void CfgPlot::setYmin(int value)
 {
     qwtPlot->setAxisScale(QwtPlot::yLeft,value,ui->spinBox_Ymax->value());
     qwtPlot->replot();
+    if (sender()!=ui->spinBox_Ymin){
+        ui->spinBox_Ymin->blockSignals(true);
+        ui->spinBox_Ymin->setValue(value);
+        ui->spinBox_Ymin->blockSignals(false);
+    }
 }
 
 TimeScaleEngine::TimeScaleEngine(int interval, const QDateTime &baseTime)

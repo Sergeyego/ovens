@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     tabManager = new TabManager(ui->tabWidget,this);
 
     actAction(ui->actionGraph,&MainWindow::newFormGraph,3);
+    actAction(ui->actionProgEl,&MainWindow::newFormProgEl,3);
     actAction(ui->actionProgWire,&MainWindow::newFormProgWire,3);
 
     actAction(ui->actionOven,&MainWindow::newFormOven,3);
@@ -93,7 +94,9 @@ void MainWindow::newFormGraph()
 
 void MainWindow::newFormProgEl()
 {
-
+    if (!tabManager->exist(sender())){
+        tabManager->addSubWindow(new FormProgEl(),sender());
+    }
 }
 
 void MainWindow::newFormProgWire()
