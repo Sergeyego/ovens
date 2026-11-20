@@ -8,6 +8,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     tabManager = new TabManager(ui->tabWidget,this);
 
+    RelModels::instance()->getModel("owens_groups")->setEditable(true);
+
     actAction(ui->actionGraph,&MainWindow::newFormGraph,3);
     actAction(ui->actionProgEl,&MainWindow::newFormProgEl,3);
     actAction(ui->actionProgWire,&MainWindow::newFormProgWire,3);

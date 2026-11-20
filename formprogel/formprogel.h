@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "rest/resttablemodel.h"
 #include "rest/relmodels.h"
+#include "progdatamodel.h"
 
 namespace Ui {
 class FormProgEl;
@@ -20,12 +21,25 @@ public:
 private:
     Ui::FormProgEl *ui;
     RestRelModel *modelElDim;
+    RestTableModel *modelProg;
+    RestTableModel *modelProgData;
+    ProgDataModel *modelProc;
     void loadSettings();
     void saveSettings();
-    QString currentId;
+    QVariant currentId;
+    int copyId;
+    int copyGrp;
 
 private slots:
+    void upd();
     void updFinished();
+    void selectElDim(QModelIndex index);
+    void updProgFinished();
+    void selectProg();
+    void setCurrentStep();
+    void copy();
+    void paste();
+    void updProc();
 };
 
 #endif // FORMPROGEL_H

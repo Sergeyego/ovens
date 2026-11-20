@@ -19,7 +19,7 @@
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <widget class="QPushButton" name="pushButtonUpd">
@@ -49,7 +49,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
         <widget class="RestTableView" name="tableViewProg">
@@ -102,14 +102,52 @@
            </layout>
           </item>
           <item>
-           <widget class="RestTableView" name="tableViewProgData">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>250</height>
-             </size>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="RestTableView" name="tableViewProgData">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>250</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <item>
+               <widget class="QPushButton" name="pushButtonCopy">
+                <property name="text">
+                 <string>Копировать</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButtonPaste">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Вставить</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
           </item>
           <item>
            <widget class="QGroupBox" name="groupBoxProc">
@@ -134,6 +172,9 @@
                    <height>16777215</height>
                   </size>
                  </property>
+                 <property name="text">
+                  <string>40</string>
+                 </property>
                 </widget>
                </item>
                <item>
@@ -151,6 +192,9 @@
                    <height>16777215</height>
                   </size>
                  </property>
+                 <property name="text">
+                  <string>8</string>
+                 </property>
                 </widget>
                </item>
                <item>
@@ -161,7 +205,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="RestComboBox" name="comboBox_2">
+                <widget class="RestComboBox" name="comboBoxOven">
                  <property name="minimumSize">
                   <size>
                    <width>120</width>

@@ -8,8 +8,6 @@ FormOven::FormOven(QWidget *parent)
     ui->setupUi(this);
     loadSettings();
 
-    RelModels::instance()->getModel("owens_groups")->setEditable(true);
-
     modelOven = new RestTableModel("owens",this);
 
     ui->tableViewOven->setModel(modelOven);
@@ -40,6 +38,7 @@ FormOven::FormOven(QWidget *parent)
     connect(mapper,SIGNAL(currentIndexChanged(int)),this,SLOT(setCurrentOven(int)));
     connect(ui->tableViewChannel->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),this,SLOT(setCurrentOvenSensor(QModelIndex)));
     connect(modelChannel,SIGNAL(sigRefresh()),this,SLOT(channelUpdFinished()));
+    connect(modelOven,SIGNAL(sigUpd()),RelModels::instance()->getModel("owens"),SLOT(refresh()));
 
     modelOven->select();
 }

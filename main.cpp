@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 #endif
     RestLogin d(QObject::tr("Термообработка"));
-    d.setHost("https://192.168.1.10");
+    d.setHost("https://192.168.1.134");
     if (d.exec()!=QDialog::Accepted) {
         exit(1);
     }

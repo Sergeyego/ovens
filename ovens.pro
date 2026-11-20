@@ -14,6 +14,7 @@ SOURCES += \
     formoven/formoven.cpp \
     formprofile/formprofile.cpp \
     formprogel/formprogel.cpp \
+    formprogel/progdatamodel.cpp \
     formprogwire/formprogwire.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -146,6 +147,7 @@ HEADERS += \
     formoven/formoven.h \
     formprofile/formprofile.h \
     formprogel/formprogel.h \
+    formprogel/progdatamodel.h \
     formprogwire/formprogwire.h \
     mainwindow.h \
     plot/cfgplot.h \

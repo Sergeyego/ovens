@@ -28,6 +28,7 @@ private:
 
 private slots:
     void currentIndexChanged(int index);
+    void setCurrentStep();
 };
 
 #endif // FORMPROGWIRE_H

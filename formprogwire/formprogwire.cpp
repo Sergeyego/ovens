@@ -22,6 +22,7 @@ FormProgWire::FormProgWire(QWidget *parent)
 
     connect(mapper,SIGNAL(currentIndexChanged(int)),this,SLOT(currentIndexChanged(int)));
     connect(ui->pushButtonUpd,SIGNAL(clicked(bool)),modelProg,SLOT(select()));
+    connect(modelProgData,SIGNAL(sigAboutToBeInsert()),this,SLOT(setCurrentStep()));
 
     modelProg->select();
 }
@@ -49,5 +50,12 @@ void FormProgWire::currentIndexChanged(int index)
     int id_prog=mapper->modelData(index,"id").isNull() ? -1 : mapper->modelData(index,"id").toInt();
     modelProgData->setFilter(RestFilter::rule(modelProgData->tableName(),"id_prog",RestFilter::Op::Eq,id_prog));
     modelProgData->setDefaultValue("id_prog",id_prog);
+    modelProgData->setDefaultValue("step",1);
     modelProgData->select();
+}
+
+void FormProgWire::setCurrentStep()
+{
+    int old_step = modelProgData->getModelData(modelProgData->rowCount()-1,"step").toInt();
+    modelProgData->setDefaultValue("step",old_step+1);
 }
